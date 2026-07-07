@@ -4,6 +4,10 @@ on:
   push:
     branches: [main, master]
 
+# প্রাইভেট রেপোর ফাইল পড়ার জন্য এই পারমিশনটুকু লাগবে
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,5 +24,5 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
           
-          # এখানে তোমার নতুন ইউজারনেম এবং রেপোর নাম আপডেট করা হয়েছে
           git push --force https://Madarauchihagmailcom:$HF_TOKEN@huggingface.co/spaces/Madarauchihagmailcom/MyMail main
+          
