@@ -1,0 +1,9 @@
+.github/
+.env
+__pycache__/
+*.pyc
+node_modules/
+dist/
+bun.lock
+data/
+data/

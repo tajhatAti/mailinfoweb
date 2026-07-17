@@ -3,7 +3,7 @@
 Credentials are read from the ACCOUNTS_JSON environment variable (a JSON array).
 Never log the raw values. On HF Spaces, set this as a *secret* variable.
 """
-from future import annotations
+from __future__ import annotations
 
 import json
 import os

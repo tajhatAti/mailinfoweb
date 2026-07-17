@@ -2,10 +2,16 @@ export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "re
 
 export interface EmailMessage {
   id: string;
+  uid?: string;
   subject: string;
   sender: string;
   senderEmail?: string;
-  timestamp: string; // ISO
+  timestamp: string;
   account: string;
   preview?: string;
+}
+
+export interface BlockedSender {
+  senderEmail: string;
+  blockedAt: string;
 }

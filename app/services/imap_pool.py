@@ -1,5 +1,5 @@
 """Pool manager that supervises one IMAP worker task per account."""
-from future import annotations
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -12,7 +12,7 @@ log = logging.getLogger("email-monitor.pool")
 
 
 class ImapPool:
-    def init(
+    def __init__(
         self,
         accounts: List[ImapAccount],
         on_event: Callable[[dict], Awaitable[None]],
@@ -59,6 +59,6 @@ class ImapPool:
             t.cancel()
         await asyncio.gather(
             *self._tasks.values(),
-            *( [self._supervisor] if self._supervisor else [] ),
+            *([self._supervisor] if self._supervisor else []),
             return_exceptions=True,
         )

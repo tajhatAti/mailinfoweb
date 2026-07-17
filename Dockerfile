@@ -1,17 +1,16 @@
-# --- ধাপ ১: নোড.জেএস দিয়ে লাভলেবলের ফ্রন্টএন্ড বিল্ড করা ---
-FROM node:18-alpine AS frontend-builder
+# ── ধাপ ১: ফ্রন্টএন্ড বিল্ড ──────────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
 WORKDIR /build
 
-# ফ্রন্টএন্ডের প্যাকেজ ফাইল কপি ও ইনস্টল করা
-COPY package.json bun.lock* package-lock.json* ./
+COPY package.json ./
+# Render build-এ bun.lock corrupt হতে পারে — npm ই ব্যবহার করো
 RUN npm install
 
-# বাকি সব ফাইল কপি করে রিয়্যাক্ট ডিস্ট্রিবিউশন (dist) তৈরি করা
 COPY . .
 RUN npm run build
 
-# --- ধাপ ২: পাইথন দিয়ে হাগিং ফেসের আসল সার্ভার রান করা ---
-FROM python:3.10-slim
+# ── ধাপ ২: পাইথন ব্যাকএন্ড ───────────────────────────────────────────
+FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -20,30 +19,30 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# সিস্টেম ডিপেন্ডেন্সি ইনস্টল
+# সিস্টেম ডিপেন্ডেন্সি
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-# পাইথন প্যাকেজ ইনস্টল
+# পাইথন প্যাকেজ
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# ব্যাকএন্ডের পাইথন কোড কপি করা
+# ব্যাকএন্ড কোড
 COPY app ./app
 
-# ধাপ ১ থেকে বিল্ড হওয়া ফ্রন্টএন্ড ফাইলগুলো পাইথনের 'dist' ফোল্ডারে কপি করে আনা
+# ফ্রন্টএন্ড ডিস্ট্রিবিউশন
 COPY --from=frontend-builder /build/dist ./dist
 
-# Hugging Face-এর সিকিউরিটি রুল অনুযায়ী নন-রুট ইউজার সেটআপ
+# Render-এর সিকিউরিটি রুল: নন-রুট ইউজার
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 7860
+# Render স্বয়ংক্রিয়ভাবে PORT সেট করে (ডিফল্ট 10000)
+# আমরা Python-এ পড়ি — কিন্তু CMD-তেও fallback রাখি
+EXPOSE 10000
 
-# সার্ভার সচল আছে কি না তা চেক করার মেকানিজম
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD curl -fsS http://localhost:7860/health || exit 1
+  CMD curl -fsS http://localhost:${PORT:-10000}/health || exit 1
 
-# সার্ভার রান করার ফাইনাল কমান্ড
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860", "--proxy-headers", "--forwarded-allow-ips=*"]
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000} --proxy-headers --forwarded-allow-ips="*" --log-level info

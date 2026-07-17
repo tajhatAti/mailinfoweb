@@ -1,0 +1,15 @@
+# Render Blueprint — optional, for Render Infrastructure-as-Code
+services:
+  - type: web
+    name: inbox-pulse
+    runtime: docker
+    repo: https://github.com/YOUR_USER/mailinfoweb
+    plan: free
+    region: oregon
+    envVars:
+      - key: ACCOUNTS_JSON
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: VITE_EMAIL_WS_URL
+        value: wss://inbox-pulse.onrender.com/ws
